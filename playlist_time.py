@@ -1,35 +1,68 @@
+import tkinter as tk
 from pytube import Playlist
+
+# Variable para almacenar el tiempo total de la playlist
+tiempo_total = 0
 
 def obtener_tiempo_total_playlist(url):
     try:
         playlist = Playlist(url)
-        tiempo_total = 0
 
-        for video in playlist.videos:
-            tiempo = int(video.length)
-            tiempo_total += tiempo
+        # Calcular el tiempo total de la playlist si no se ha calculado previamente
+        global tiempo_total
+        if tiempo_total == 0:
+            tiempo_total = sum(int(video.length) for video in playlist.videos)
 
-        segundos_totales = tiempo_total
-        horas, segundos = divmod(segundos_totales, 3600)
-        minutos, segundos = divmod(segundos, 60)
+        tiempo_total_h = tiempo_total // 3600
+        tiempo_total_m = (tiempo_total % 3600) // 60
+        tiempo_total_s = tiempo_total % 60
 
-        print(f"Tiempo total de la playlist: {horas} horas, {minutos} minutos, {segundos} segundos")
+        return tiempo_total_h, tiempo_total_m, tiempo_total_s
 
-        return tiempo_total
     except Exception as e:
-        print(f"Error al obtener la lista de reproducción: {e}")
         return None
 
-if __name__ == "__main__":
-    url = input("Ingresa la URL de la lista de reproducción de YouTube: ")
-    tiempo_total = obtener_tiempo_total_playlist(url)
+def procesar_lista_reproduccion():
+    divisor = int(divisor_spinbox.get())
+    result = obtener_tiempo_total_playlist(url_entry.get())
 
-    if tiempo_total is not None:
-        opcion = input("¿Deseas dividir el tiempo en jornadas? (Sí/No): ")
-        if opcion.lower() == 'si':
-            horas_por_jornada = int(input("Ingresa la cantidad de horas por jornada: "))
-            horas, segundos = divmod(tiempo_total, 3600)
-            minutos, segundos = divmod(segundos, 60)
-            jornadas = horas // horas_por_jornada
-            horas_restantes = horas % horas_por_jornada
-            print(f"El tiempo total se divide en {jornadas} jornadas de {horas_por_jornada} horas y {horas_restantes} horas restantes.")
+    if result is not None:
+        horas, minutos, segundos = result
+        resultado_label.config(text=f"Tiempo total: {horas:02d}:{minutos:02d}:{segundos:02d}")
+
+        horas_divididas = horas // divisor
+        minutos_divididos = (minutos + horas % divisor * 60) // divisor
+
+        resultado_dias_label.config(text=f"Duración en días: {horas_divididas} días, {minutos_divididos} minutos")
+
+# Crear ventana
+window = tk.Tk()
+window.title("Calculadora de Tiempo de YouTube Playlist")
+
+# Interfaz
+url_label = tk.Label(window, text="Ingresa el enlace de la lista de reproducción:")
+url_label.pack()
+
+url_entry = tk.Entry(window, width=40)
+url_entry.pack()
+
+divisor_label = tk.Label(window, text="Divisor de jornadas:")
+divisor_label.pack()
+
+divisor_spinbox = tk.Spinbox(window, from_=1, to=100)
+divisor_spinbox.pack()
+
+procesar_button = tk.Button(window, text="Procesar Playlist", command=procesar_lista_reproduccion)
+procesar_button.pack()
+
+mensaje_label = tk.Label(window, text="")
+mensaje_label.pack()
+
+resultado_label = tk.Label(window, text="")
+resultado_label.pack()
+
+resultado_dias_label = tk.Label(window, text="")
+resultado_dias_label.pack()
+
+# Inicio
+window.mainloop()
